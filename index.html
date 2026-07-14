@@ -142,12 +142,13 @@
   "access_token": "eyJhbGciOi...",
   "refresh_token": "eyJhbGciOi...",
   "token_type": "bearer",
-  "expires_in": 1800
+  "expires_in": 86400
 }</code></pre>
 <p>Envie o <code>access_token</code> em todas as chamadas:</p>
 <pre><code>Authorization: Bearer eyJhbGciOi...</code></pre>
-<div class="note"><b>Validade:</b> o <code>access_token</code> expira em <b>30 minutos</b> (<code>expires_in</code> = segundos). Quando receber <b>401</b>, renove com
-<code>POST /auth/refresh</code> enviando <code>{"refresh_token": "..."}</code> — ou simplesmente faça login de novo. Para rotinas agendadas (ex.: a cada 5 min), o mais simples é fazer login no início de cada execução.</div>
+<div class="note"><b>Validade:</b> o <code>access_token</code> vale <b>24 horas</b> (<code>expires_in</code> = segundos) — uma carga noturna inteira roda com um único login.
+Se receber <b>401</b> ("Não foi possível validar as credenciais"), renove com <code>POST /auth/refresh</code> enviando <code>{"refresh_token": "..."}</code> —
+ou faça login novamente e repita a chamada que falhou.</div>
 
 <h2 id="produtos-carga">Produtos — carga em massa (recomendado)</h2>
 <p>É a rota ideal para integração com ERP: envie a lista de produtos e a KIPI faz <b>upsert pelo campo <code>codigo</code></b> —
@@ -163,7 +164,7 @@ se o código já existe, o produto é <b>atualizado</b>; se não existe, é <b>c
       "estoque": 350,
       "qtd_minima": 1,
       "qtd_maxima": 200,
-      "image_url": "https://cdn.suaempresa.com.br/arroz5kg.jpg",
+      "imagem_base64": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
       "precos": [
         {"unidade": "UN", "preco": 22.90, "quantidade_unidades": 1},
         {"unidade": "FD", "preco": 132.00, "quantidade_unidades": 6}
@@ -172,6 +173,7 @@ se o código já existe, o produto é <b>atualizado</b>; se não existe, é <b>c
     {
       "codigo": "7899876543210",
       "descricao": "OLEO DE SOJA 900ML",
+      "imagem_base64": null,
       "estoque": 1200,
       "precos": [
         {"unidade": "CX", "preco": 118.80, "quantidade_unidades": 20}
@@ -186,8 +188,8 @@ se o código já existe, o produto é <b>atualizado</b>; se não existe, é <b>c
   <tr><td><code>precos</code></td><td>lista</td><td><b>sim</b> (mín. 1)</td><td>Um item por embalagem: <code>unidade</code> (texto livre: UN, CX, FD, PALLET...), <code>preco</code> (&gt; 0, da embalagem inteira) e <code>quantidade_unidades</code> (quantas unidades a embalagem contém).</td></tr>
   <tr><td><code>estoque</code></td><td>inteiro</td><td>não (padrão 0)</td><td>Saldo disponível.</td></tr>
   <tr><td><code>qtd_minima</code> / <code>qtd_maxima</code></td><td>inteiro</td><td>não</td><td>Limites de quantidade por pedido para este produto.</td></tr>
-  <tr><td><code>image_url</code></td><td>string</td><td>não</td><td>URL pública da imagem (preferencial).</td></tr>
-  <tr><td><code>imagem_base64</code></td><td>string</td><td>não</td><td>Alternativa: imagem em base64 (<code>data:image/jpeg;base64,...</code>). A KIPI hospeda a imagem para você.</td></tr>
+  <tr><td><code>imagem_base64</code></td><td>string</td><td>não</td><td>Imagem do produto em base64 (<code>data:image/jpeg;base64,...</code>) — é assim que os parceiros enviam hoje. A KIPI hospeda a imagem para você. Pode ser <code>null</code>. Se o upload da imagem falhar, o produto é gravado mesmo assim (sem imagem).</td></tr>
+  <tr><td><code>image_url</code></td><td>string</td><td>não</td><td>Alternativa: URL pública da imagem, se você já tiver a foto hospedada.</td></tr>
 </table>
 <div class="tip"><b>Rotina sugerida:</b> exporte o catálogo do ERP e envie ao <code>/produtos/bulk</code> 1x ao dia (ou sempre que preço/estoque mudar). Lotes de até ~200 produtos por chamada funcionam bem; para catálogos maiores, divida em várias chamadas.</div>
 
@@ -311,6 +313,7 @@ H = {"Authorization": f"Bearer {token}"}
 # 2) carga de produtos (upsert pelo codigo)
 catalogo = [
     {"codigo": "7891234567890", "descricao": "ARROZ BRANCO TIPO 1 5KG",
+     "imagem_base64": None,  # ou "data:image/jpeg;base64,..."
      "estoque": 350, "precos": [{"unidade": "UN", "preco": 22.90, "quantidade_unidades": 1}]},
 ]
 requests.post(f"{BASE}/produtos/bulk", json=catalogo, headers=H).raise_for_status()
