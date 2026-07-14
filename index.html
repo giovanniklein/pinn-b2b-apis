@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KIPI — Portal de Integração (API do Parceiro)</title>
+<meta name="description" content="Manual de integração da API KIPI para parceiros atacadistas: carga de produtos, consulta e ações de pedidos direto do seu ERP.">
+<link rel="icon" href="logo.jpeg">
+<style>
+  :root{
+    --red:#c53030; --red-dark:#9b2c2c; --ink:#1a202c; --muted:#4a5568; --line:#e2e8f0;
+    --bg:#ffffff; --soft:#f7fafc; --code:#0f172a; --green:#276749; --amber:#975a16;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  a{color:var(--red);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  pre{background:var(--code);color:#e2e8f0;border-radius:10px;padding:16px 18px;overflow-x:auto;font-size:13.5px;line-height:1.55;margin:14px 0}
+  pre code{background:none;border:none;padding:0;color:inherit;font-size:inherit}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+  header.top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line)}
+  .top-in{display:flex;align-items:center;gap:14px;height:62px}
+  .top-in img{width:34px;height:34px;border-radius:8px;object-fit:cover}
+  .top-in .brand{font-weight:800;font-size:19px;color:var(--red)}
+  .top-in .sub{color:var(--muted);font-size:14px;border-left:1px solid var(--line);padding-left:14px}
+  .top-in .right{margin-left:auto;display:flex;gap:16px;font-size:14px}
+  .hero{background:linear-gradient(135deg,#fff5f5,#fff);border-bottom:1px solid var(--line);padding:44px 0 36px}
+  .hero h1{font-size:34px;line-height:1.2;margin-bottom:10px}
+  .hero h1 span{color:var(--red)}
+  .hero p{color:var(--muted);max-width:760px;font-size:17px}
+  .hero .cta{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-block;padding:11px 20px;border-radius:10px;font-weight:600;font-size:15px}
+  .btn.primary{background:var(--red);color:#fff}
+  .btn.primary:hover{background:var(--red-dark);text-decoration:none}
+  .btn.ghost{border:1.5px solid var(--line);color:var(--ink)}
+  .btn.ghost:hover{border-color:var(--red);color:var(--red);text-decoration:none}
+  .layout{display:grid;grid-template-columns:250px 1fr;gap:40px;padding:36px 0 70px}
+  nav.side{position:sticky;top:86px;align-self:start;font-size:14.5px}
+  nav.side .grp{font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
+  nav.side a{display:block;padding:5px 10px;border-left:2px solid transparent;color:var(--ink)}
+  nav.side a:hover{border-left-color:var(--red);color:var(--red);text-decoration:none}
+  main h2{font-size:26px;margin:46px 0 10px;padding-top:10px;border-top:1px solid var(--line)}
+  main h2:first-child{margin-top:0;border-top:none;padding-top:0}
+  main h3{font-size:19px;margin:28px 0 8px}
+  main p{margin:10px 0;color:#2d3748}
+  main ul,main ol{margin:10px 0 10px 24px;color:#2d3748}
+  main li{margin:5px 0}
+  .chip{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:6px;margin-right:8px;vertical-align:1px}
+  .get{background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8}
+  .post{background:#f0fff4;color:#276749;border:1px solid #c6f6d5}
+  .put{background:#fffbeb;color:#975a16;border:1px solid #fde68a}
+  .del{background:#fff5f5;color:#c53030;border:1px solid #fed7d7}
+  .endpoint{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:16px 0 8px;font-family:ui-monospace,Consolas,monospace;font-size:14.5px}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+  th{background:var(--soft);font-weight:700}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #d69e2e;border-radius:8px;padding:12px 16px;margin:16px 0;font-size:14.5px}
+  .tip{background:#f0fff4;border:1px solid #c6f6d5;border-left:4px solid #38a169;border-radius:8px;padding:12px 16px;margin:16px 0;font-size:14.5px}
+  .warn{background:#fff5f5;border:1px solid #fed7d7;border-left:4px solid var(--red);border-radius:8px;padding:12px 16px;margin:16px 0;font-size:14.5px}
+  .flow{counter-reset:passo;margin:18px 0}
+  .flow .step{display:flex;gap:14px;margin:14px 0;padding:14px 16px;background:var(--soft);border:1px solid var(--line);border-radius:10px}
+  .flow .step::before{counter-increment:passo;content:counter(passo);flex:0 0 30px;height:30px;border-radius:50%;background:var(--red);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px}
+  footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-size:13.5px;text-align:center}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;display:flex;flex-wrap:wrap;gap:4px}nav.side .grp{width:100%}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <img src="logo.jpeg" alt="KIPI">
+    <span class="brand">KIPI</span>
+    <span class="sub">Portal de Integração — API do Parceiro</span>
+    <span class="right">
+      <a href="https://pinn-b2b-atacadista.onrender.com/docs" target="_blank" rel="noopener">Swagger (teste ao vivo)</a>
+      <a href="https://kipi.com.br">kipi.com.br</a>
+    </span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Integre o seu ERP à <span>KIPI</span></h1>
+    <p>Manual completo para o parceiro atacadista integrar o seu sistema de gestão: carregue seu catálogo de produtos,
+       baixe automaticamente os pedidos dos clientes (com os dados cadastrais para o seu ERP) e aceite, recuse ou
+       entregue pedidos — tudo por API, sem precisar acessar o app.</p>
+    <div class="cta">
+      <a class="btn primary" href="#autenticacao">Começar agora</a>
+      <a class="btn ghost" href="https://pinn-b2b-atacadista.onrender.com/docs" target="_blank" rel="noopener">Abrir Swagger UI</a>
+      <a class="btn ghost" href="https://pinn-b2b-atacadista.onrender.com/openapi.json" target="_blank" rel="noopener">OpenAPI (JSON)</a>
+    </div>
+  </div>
+</section>
+
+<div class="wrap layout">
+<nav class="side">
+  <div class="grp">Introdução</div>
+  <a href="#visao-geral">Visão geral</a>
+  <a href="#autenticacao">Autenticação</a>
+  <div class="grp">Produtos</div>
+  <a href="#produtos-carga">Carga em massa (bulk)</a>
+  <a href="#produtos-listar">Listar / consultar</a>
+  <a href="#produtos-crud">Criar, atualizar, excluir</a>
+  <div class="grp">Pedidos</div>
+  <a href="#pedidos-status">Status possíveis</a>
+  <a href="#pedidos-listar">Listar com filtros</a>
+  <a href="#pedidos-detalhe">Detalhe + dados do cliente</a>
+  <a href="#pedidos-acoes">Ações (aceitar, recusar...)</a>
+  <div class="grp">Integração</div>
+  <a href="#fluxo">Fluxo recomendado</a>
+  <a href="#exemplo-completo">Exemplo completo (Python)</a>
+  <a href="#erros">Erros e boas práticas</a>
+</nav>
+
+<main>
+
+<h2 id="visao-geral">Visão geral</h2>
+<p>A API do Parceiro é uma API REST sobre HTTPS que devolve JSON. Tudo o que o app do parceiro faz, o seu ERP também pode fazer.</p>
+<table>
+  <tr><th>URL base (produção)</th><td><code>https://pinn-b2b-atacadista.onrender.com</code></td></tr>
+  <tr><th>Formato</th><td>JSON (envie o header <code>Content-Type: application/json</code>)</td></tr>
+  <tr><th>Autenticação</th><td>JWT — header <code>Authorization: Bearer &lt;access_token&gt;</code></td></tr>
+  <tr><th>Documentação interativa</th><td><a href="https://pinn-b2b-atacadista.onrender.com/docs" target="_blank" rel="noopener">/docs</a> (Swagger UI — permite testar cada rota no navegador)</td></tr>
+</table>
+<p>O que você pode fazer:</p>
+<ul>
+  <li><b>Produtos</b> — carga completa ou incremental do catálogo (preços por embalagem, estoque, imagem, quantidade mínima/máxima).</li>
+  <li><b>Pedidos</b> — baixar os pedidos feitos pelos clientes com todos os dados do cliente (razão social, CNPJ, endereço de entrega) e agir sobre eles: aceitar, recusar, marcar como entregue ou cancelar.</li>
+</ul>
+<div class="tip"><b>Multi-tenant automático:</b> o token identifica a sua empresa. Você só enxerga (e só altera) os seus próprios produtos e pedidos — nunca envie <code>atacadista_id</code> no corpo das requisições.</div>
+
+<h2 id="autenticacao">Autenticação</h2>
+<p>Use o <b>mesmo e-mail e senha</b> da sua conta de parceiro (a que você usa em <a href="http://parceiros.kipi.com.br">parceiros.kipi.com.br</a>).</p>
+<div class="endpoint"><span class="chip post">POST</span>/auth/login</div>
+<pre><code>curl -X POST https://pinn-b2b-atacadista.onrender.com/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "seu-email@empresa.com.br", "senha": "sua-senha"}'</code></pre>
+<p>Resposta:</p>
+<pre><code>{
+  "access_token": "eyJhbGciOi...",
+  "refresh_token": "eyJhbGciOi...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}</code></pre>
+<p>Envie o <code>access_token</code> em todas as chamadas:</p>
+<pre><code>Authorization: Bearer eyJhbGciOi...</code></pre>
+<div class="note"><b>Validade:</b> o <code>access_token</code> expira em <b>30 minutos</b> (<code>expires_in</code> = segundos). Quando receber <b>401</b>, renove com
+<code>POST /auth/refresh</code> enviando <code>{"refresh_token": "..."}</code> — ou simplesmente faça login de novo. Para rotinas agendadas (ex.: a cada 5 min), o mais simples é fazer login no início de cada execução.</div>
+
+<h2 id="produtos-carga">Produtos — carga em massa (recomendado)</h2>
+<p>É a rota ideal para integração com ERP: envie a lista de produtos e a KIPI faz <b>upsert pelo campo <code>codigo</code></b> —
+se o código já existe, o produto é <b>atualizado</b>; se não existe, é <b>criado</b>. Pode rodar quantas vezes quiser (idempotente).</p>
+<div class="endpoint"><span class="chip post">POST</span>/produtos/bulk</div>
+<pre><code>curl -X POST https://pinn-b2b-atacadista.onrender.com/produtos/bulk \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "codigo": "7891234567890",
+      "descricao": "ARROZ BRANCO TIPO 1 5KG",
+      "estoque": 350,
+      "qtd_minima": 1,
+      "qtd_maxima": 200,
+      "image_url": "https://cdn.suaempresa.com.br/arroz5kg.jpg",
+      "precos": [
+        {"unidade": "UN", "preco": 22.90, "quantidade_unidades": 1},
+        {"unidade": "FD", "preco": 132.00, "quantidade_unidades": 6}
+      ]
+    },
+    {
+      "codigo": "7899876543210",
+      "descricao": "OLEO DE SOJA 900ML",
+      "estoque": 1200,
+      "precos": [
+        {"unidade": "CX", "preco": 118.80, "quantidade_unidades": 20}
+      ]
+    }
+  ]'</code></pre>
+<h3>Campos do produto</h3>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Descrição</th></tr>
+  <tr><td><code>codigo</code></td><td>string</td><td><b>sim</b></td><td>Código do produto no seu ERP (chave do upsert). Use o mesmo sempre.</td></tr>
+  <tr><td><code>descricao</code></td><td>string</td><td><b>sim</b></td><td>Descrição de venda (exibida ao cliente em CAIXA ALTA).</td></tr>
+  <tr><td><code>precos</code></td><td>lista</td><td><b>sim</b> (mín. 1)</td><td>Um item por embalagem: <code>unidade</code> (texto livre: UN, CX, FD, PALLET...), <code>preco</code> (&gt; 0, da embalagem inteira) e <code>quantidade_unidades</code> (quantas unidades a embalagem contém).</td></tr>
+  <tr><td><code>estoque</code></td><td>inteiro</td><td>não (padrão 0)</td><td>Saldo disponível.</td></tr>
+  <tr><td><code>qtd_minima</code> / <code>qtd_maxima</code></td><td>inteiro</td><td>não</td><td>Limites de quantidade por pedido para este produto.</td></tr>
+  <tr><td><code>image_url</code></td><td>string</td><td>não</td><td>URL pública da imagem (preferencial).</td></tr>
+  <tr><td><code>imagem_base64</code></td><td>string</td><td>não</td><td>Alternativa: imagem em base64 (<code>data:image/jpeg;base64,...</code>). A KIPI hospeda a imagem para você.</td></tr>
+</table>
+<div class="tip"><b>Rotina sugerida:</b> exporte o catálogo do ERP e envie ao <code>/produtos/bulk</code> 1x ao dia (ou sempre que preço/estoque mudar). Lotes de até ~200 produtos por chamada funcionam bem; para catálogos maiores, divida em várias chamadas.</div>
+
+<h2 id="produtos-listar">Produtos — listar e consultar</h2>
+<div class="endpoint"><span class="chip get">GET</span>/produtos?page=1&amp;page_size=100&amp;search=arroz</div>
+<table>
+  <tr><th>Parâmetro</th><th>Descrição</th></tr>
+  <tr><td><code>page</code> / <code>page_size</code></td><td>Paginação (page_size máx. 100). A resposta traz <code>total</code> e <code>total_pages</code>.</td></tr>
+  <tr><td><code>search</code></td><td>Busca por código <b>ou</b> descrição (contém, sem diferenciar maiúsculas).</td></tr>
+</table>
+<div class="endpoint"><span class="chip get">GET</span>/produtos/{produto_id}</div>
+<p>Consulta um produto pelo ID interno da KIPI (campo <code>id</code> retornado nas listagens).</p>
+
+<h2 id="produtos-crud">Produtos — criar, atualizar e excluir (unitário)</h2>
+<div class="endpoint"><span class="chip post">POST</span>/produtos</div>
+<p>Cria <b>um</b> produto (mesmo corpo de um item do bulk). Para integração, prefira o <code>/produtos/bulk</code>.</p>
+<div class="endpoint"><span class="chip put">PUT</span>/produtos/{produto_id}</div>
+<p>Atualização parcial: envie só os campos que quer mudar (ex.: <code>{"estoque": 40}</code>).</p>
+<div class="endpoint"><span class="chip del">DELETE</span>/produtos/{produto_id}</div>
+<p>Remove o produto do catálogo.</p>
+
+<h2 id="pedidos-status">Pedidos — status possíveis</h2>
+<table>
+  <tr><th>Status</th><th>Significado</th><th>Quem coloca</th></tr>
+  <tr><td><code>pendente</code></td><td>Pedido novo, aguardando a sua decisão.</td><td>Criado pela compra do cliente (ou do representante VendeMais).</td></tr>
+  <tr><td><code>aceito</code></td><td>Você confirmou que vai atender.</td><td>Você — <code>POST /pedidos/{id}/aceitar</code></td></tr>
+  <tr><td><code>recusado</code></td><td>Você recusou (ou cancelou) o pedido, com motivo.</td><td>Você — <code>POST /pedidos/{id}/recusar</code> ou <code>/cancelar</code></td></tr>
+  <tr><td><code>entregue</code></td><td>Mercadoria entregue ao cliente.</td><td>Você — <code>POST /pedidos/{id}/entregar</code></td></tr>
+</table>
+<div class="note">O <b>cancelar</b> existe para desfazer um pedido <i>já aceito</i>; no sistema ele fica com status <code>recusado</code> e guarda o motivo informado.</div>
+
+<h2 id="pedidos-listar">Pedidos — listar com filtros</h2>
+<div class="endpoint"><span class="chip get">GET</span>/pedidos/?status=pendente&amp;page=1&amp;page_size=50</div>
+<table>
+  <tr><th>Parâmetro</th><th>Descrição</th></tr>
+  <tr><td><code>status</code></td><td><code>pendente</code>, <code>aceito</code>, <code>recusado</code> ou <code>entregue</code>. Sem o parâmetro, retorna todos.</td></tr>
+  <tr><td><code>data_inicio</code> / <code>data_fim</code></td><td>Intervalo da data de criação, formato <code>YYYY-MM-DD</code>.</td></tr>
+  <tr><td><code>varejista</code></td><td>Filtra pelo nome (ou ID) do cliente — busca "contém".</td></tr>
+  <tr><td><code>produto</code></td><td>Filtra por descrição de produto contida nos itens.</td></tr>
+  <tr><td><code>page</code> / <code>page_size</code></td><td>Paginação (máx. 100 por página).</td></tr>
+</table>
+<p>Cada item da lista traz: <code>id</code>, nome do cliente (<code>varejista_nome_fantasia</code>), <code>valor_total</code>, <code>status</code>,
+<code>condicao_pagamento</code>, <code>data_criacao</code>, nome do representante e a marcação <code>venda_mais</code> quando o pedido veio do programa VendeMais.</p>
+
+<h2 id="pedidos-detalhe">Pedidos — detalhe (com dados do cliente para o seu ERP)</h2>
+<div class="endpoint"><span class="chip get">GET</span>/pedidos/{pedido_id}</div>
+<p>Retorna o pedido completo. Os blocos importantes para o seu ERP:</p>
+<pre><code>{
+  "id": "6a4d3821f6c928eea9ca02c0",
+  "status": "pendente",
+  "data_criacao": "2026-07-06T02:31:30",
+  "condicao_pagamento": "21 DIAS",
+  "valor_total": 246.20,
+
+  "varejista_nome_fantasia": "MERCEARIA DA CLAU",     // dados do CLIENTE
+  "varejista_razao_social": "CLAUDETE COMERCIO LTDA", // p/ cadastro no ERP
+  "varejista_cnpj": "12.345.678/0001-90",
+  "varejista_inscricao_estadual": "096/2782076",
+  "varejista_endereco": "Av. Bento Goncalves, 4200 - Partenon - Porto Alegre/RS - CEP 90650-002",
+  "varejista_email": "clau@mercearia.com.br",
+  "varejista_telefone": "(51) 99999-8888",
+
+  "endereco_entrega": {                                // onde ENTREGAR
+    "logradouro": "Rua Joao Salomoni", "numero": "1365",
+    "bairro": "Vila Nova", "cidade": "Porto Alegre",
+    "uf": "RS", "cep": "91740-830", "complemento": null
+  },
+
+  "representante_nome": null,   // preenchido quando ha representante
+  "venda_mais": false,          // true = vendido pelo representante (VendeMais)
+
+  "itens": [
+    {
+      "produto_id": "665f0c...",
+      "codigo": "7891234567890",         // SEU codigo de produto (do bulk)
+      "descricao_produto": "ARROZ BRANCO TIPO 1 5KG",
+      "unidade": "FD",                   // embalagem escolhida pelo cliente
+      "quantidade": 10,
+      "valor_unitario": 132.00,
+      "valor_total": 1320.00
+    }
+  ]
+}</code></pre>
+<div class="tip">O campo <code>codigo</code> de cada item é o <b>mesmo código que você enviou na carga de produtos</b> — use-o para casar o pedido com o item no seu ERP, sem precisar guardar os IDs internos da KIPI.</div>
+
+<h2 id="pedidos-acoes">Pedidos — ações (sem acessar o app)</h2>
+<div class="endpoint"><span class="chip post">POST</span>/pedidos/{pedido_id}/aceitar</div>
+<p>Sem corpo. Marca o pedido como <code>aceito</code>.</p>
+<div class="endpoint"><span class="chip post">POST</span>/pedidos/{pedido_id}/recusar</div>
+<pre><code>{"motivo": "Estoque insuficiente para o item 7891234567890"}</code></pre>
+<div class="endpoint"><span class="chip post">POST</span>/pedidos/{pedido_id}/entregar</div>
+<p>Sem corpo. Marca como <code>entregue</code> (informe apenas após a entrega física — este evento também ativa clientes pré-cadastrados por representante).</p>
+<div class="endpoint"><span class="chip post">POST</span>/pedidos/{pedido_id}/cancelar</div>
+<pre><code>{"motivo": "Cliente solicitou cancelamento"}</code></pre>
+<p>Todas respondem com <code>{"id": "...", "status": "...", "data_criacao": "..."}</code>.</p>
+
+<h2 id="fluxo">Fluxo de integração recomendado</h2>
+<p>Exemplo prático de rotina do ERP (pode rodar a cada 5–15 minutos):</p>
+<div class="flow">
+  <div class="step"><div><b>Login</b> — <code>POST /auth/login</code> e guarde o <code>access_token</code>.</div></div>
+  <div class="step"><div><b>Consultar pedidos novos</b> — <code>GET /pedidos/?status=pendente</code>. Se a lista vier vazia, encerre a execução.</div></div>
+  <div class="step"><div><b>Baixar cada pedido</b> — <code>GET /pedidos/{id}</code>. Cadastre o cliente no ERP (razão social, CNPJ, IE, endereço) se ainda não existir, e importe os itens usando o campo <code>codigo</code>.</div></div>
+  <div class="step"><div><b>Decidir no ERP</b> — verifique estoque/crédito e então <b>aceite</b> (<code>POST /pedidos/{id}/aceitar</code>) ou <b>recuse com motivo</b> (<code>POST /pedidos/{id}/recusar</code>).</div></div>
+  <div class="step"><div><b>Após a entrega física</b> — <code>POST /pedidos/{id}/entregar</code>. O cliente vê o status atualizado no app na hora.</div></div>
+  <div class="step"><div><b>Catálogo em dia</b> — em rotina separada (ex.: diária), envie preços/estoque com <code>POST /produtos/bulk</code>.</div></div>
+</div>
+<div class="warn"><b>Evite processar duas vezes:</b> guarde no seu ERP o <code>id</code> dos pedidos já importados. Como você mesmo muda o status para <code>aceito</code>/<code>recusado</code>, a consulta por <code>status=pendente</code> naturalmente deixa de retorná-los.</div>
+
+<h2 id="exemplo-completo">Exemplo completo (Python)</h2>
+<pre><code>import requests
+
+BASE = "https://pinn-b2b-atacadista.onrender.com"
+EMAIL, SENHA = "seu-email@empresa.com.br", "sua-senha"
+
+# 1) login
+r = requests.post(f"{BASE}/auth/login", json={"email": EMAIL, "senha": SENHA})
+r.raise_for_status()
+token = r.json()["access_token"]
+H = {"Authorization": f"Bearer {token}"}
+
+# 2) carga de produtos (upsert pelo codigo)
+catalogo = [
+    {"codigo": "7891234567890", "descricao": "ARROZ BRANCO TIPO 1 5KG",
+     "estoque": 350, "precos": [{"unidade": "UN", "preco": 22.90, "quantidade_unidades": 1}]},
+]
+requests.post(f"{BASE}/produtos/bulk", json=catalogo, headers=H).raise_for_status()
+
+# 3) baixar pedidos pendentes
+pedidos = requests.get(f"{BASE}/pedidos/", params={"status": "pendente", "page_size": 100},
+                       headers=H).json()["items"]
+
+for p in pedidos:
+    det = requests.get(f"{BASE}/pedidos/{p['id']}", headers=H).json()
+    print("Pedido", det["id"], "-", det["varejista_nome_fantasia"],
+          "- CNPJ", det.get("varejista_cnpj"), "- R$", det["valor_total"])
+    # ... cadastre o cliente e importe os itens no seu ERP ...
+
+    tem_estoque = True  # sua regra de negocio aqui
+    if tem_estoque:
+        requests.post(f"{BASE}/pedidos/{p['id']}/aceitar", headers=H).raise_for_status()
+    else:
+        requests.post(f"{BASE}/pedidos/{p['id']}/recusar",
+                      json={"motivo": "Estoque insuficiente"}, headers=H).raise_for_status()</code></pre>
+
+<h2 id="erros">Erros e boas práticas</h2>
+<table>
+  <tr><th>Código</th><th>Significado</th><th>O que fazer</th></tr>
+  <tr><td><code>401</code></td><td>Token ausente, inválido ou expirado.</td><td>Faça login novamente (ou use <code>/auth/refresh</code>) e repita a chamada.</td></tr>
+  <tr><td><code>403</code></td><td>Conta inativa.</td><td>Fale com o administrador da KIPI.</td></tr>
+  <tr><td><code>404</code></td><td>Recurso não encontrado (ou não pertence à sua conta).</td><td>Confira o <code>id</code> utilizado.</td></tr>
+  <tr><td><code>422</code></td><td>Corpo/parâmetros inválidos.</td><td>A resposta detalha campo a campo o que está errado — ajuste e reenvie.</td></tr>
+  <tr><td><code>400</code></td><td>Regra de negócio (ex.: recusar sem motivo).</td><td>Veja a mensagem em <code>detail</code>.</td></tr>
+</table>
+<ul>
+  <li>Consulte por <code>status=pendente</code> em intervalos de <b>5 a 15 minutos</b> — não é necessário consultar a cada segundo.</li>
+  <li>O <code>/produtos/bulk</code> é idempotente: reenviar o mesmo catálogo não duplica produtos.</li>
+  <li>Guarde o <code>refresh_token</code> apenas se for manter processos longos; para rotinas curtas, faça login a cada execução.</li>
+  <li>Dúvidas ou credenciais: fale com a KIPI pelo WhatsApp <a href="https://wa.me/555198527906">(51) 9852-7906</a>.</li>
+</ul>
+
+</main>
+</div>
+
+<footer>
+  <div class="wrap">
+    KIPI — Plataforma de múltiplos atacados com frete grátis · <a href="https://kipi.com.br">kipi.com.br</a> ·
+    <a href="https://pinn-b2b-atacadista.onrender.com/docs" target="_blank" rel="noopener">Swagger UI</a><br>
+    Copyright © 2026. Kipi Agencia de Compras Online Ltda. CNPJ n.º 65.962.823/0001-43
+  </div>
+</footer>
+
+</body>
+</html>
